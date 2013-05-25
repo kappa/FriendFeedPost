@@ -16,6 +16,7 @@ import android.content.Context;
 import android.net.NetworkInfo;
 import com.friendfeed.api.*;
 import android.os.AsyncTask;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -23,6 +24,7 @@ import android.os.AsyncTask;
  */
 public class PostActivity extends Activity {
     private SharedPreferences prefs;
+    private String last_entry_posted;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +35,14 @@ public class PostActivity extends Activity {
 
         if (prefs.getString("login", "").equals("") || prefs.getString("remotekey", "").equals("")) {
             start_settings_activity();
+        }
+
+        Intent intent = getIntent();
+        String action = intent.getAction();
+
+        if (Intent.ACTION_SEND.equals(action)) {
+            EditText edit = (EditText) findViewById(R.id.edit_body);
+            edit.setText(intent.getStringExtra(Intent.EXTRA_SUBJECT) + " " + intent.getStringExtra(Intent.EXTRA_TEXT));
         }
 
         if (!is_connected()) { // TODO: offline operation
@@ -84,7 +94,8 @@ public class PostActivity extends Activity {
 
             try {
                 Entry entry = frf.publish(texts[0]);
-                return "ok";
+                last_entry_posted = entry.getId();
+                return "ok, " + last_entry_posted;
             } catch (RuntimeException e) {
                 return e.toString();
             }
@@ -96,9 +107,44 @@ public class PostActivity extends Activity {
         }
     }
 
+    private class FriendFeedPostCommentTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... texts) {
+            FriendFeedService frf = new FriendFeedServiceImpl(prefs.getString("login", ""), prefs.getString("remotekey", ""));
+            frf.setUseCompression(true);
+
+            try {
+                frf.publishComment(texts[1], texts[0]);
+                return "ok";
+            } catch (RuntimeException e) {
+                return e.toString();
+            }
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            Toast.makeText(PostActivity.this, "Posted 1st comment: " + result, Toast.LENGTH_LONG).show();
+        }
+    }
 
     public void button_post_onClick(View view) {
+        last_entry_posted = "";
         EditText text = (EditText)findViewById(R.id.edit_body);
-        new FriendFeedPostTask().execute(text.getText().toString());
+        if (text.length() > 0) {
+            FriendFeedPostTask task = new FriendFeedPostTask();
+            task.execute(text.getText().toString());
+            try {
+                task.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        EditText first_comment = (EditText)findViewById(R.id.edit_first_comment);
+        if (last_entry_posted.length() > 0 && first_comment.length() > 0)
+            new FriendFeedPostCommentTask().execute(first_comment.getText().toString(), last_entry_posted);
     }
 }

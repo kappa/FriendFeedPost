@@ -1,0 +1,13 @@
+FriendFeed Post!
+
+1. 2 activities — one for settings, and one for actual posting.
+2. Settings activity supports backup, contains 2 fields — login and remotekey. And a link to remotekey page.
+3. Posting activity contains the name of the feed, a text area for
+the body of the post with link appended and a text area for the 1st comment.
+4. Sharing intent to be used from browsers and text/photo apps.
+
+Optional
+1. Offline operation.
+2. Choosing the dst feed.
+3. Pre-fill with app text selection.
+4. Posting images and music using selectors.

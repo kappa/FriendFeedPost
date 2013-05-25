@@ -1,0 +1,15 @@
+<resources>
+    
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_title_general_switch">General switch</string>
+    <string name="pref_description_general_switch">You can switch this on and off for fun and profit</string>
+
+    <string name="pref_header_credentials">Credentials</string>
+
+    <string name="pref_title_login">FriendFeed Login</string>
+    <string name="pref_title_remotekey">FriendFeed Remotekey</string>
+</resources>

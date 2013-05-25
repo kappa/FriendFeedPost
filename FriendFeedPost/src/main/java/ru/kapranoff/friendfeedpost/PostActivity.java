@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.content.Intent;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.EditText;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.net.ConnectivityManager;
@@ -15,32 +16,28 @@ import android.content.Context;
 import android.net.NetworkInfo;
 import com.friendfeed.api.*;
 import android.os.AsyncTask;
-import java.io.IOException;
 
 
 /**
  * Created by kappa on 25.05.13.
  */
 public class PostActivity extends Activity {
-    private String login;
-    private String remotekey;
+    private SharedPreferences prefs;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.post_layout);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        login = prefs.getString("login", "");
-        remotekey = prefs.getString("remotekey", "");
-
-        while (login.equals("") || remotekey.equals("")) {
+        if (prefs.getString("login", "").equals("") || prefs.getString("remotekey", "").equals("")) {
             start_settings_activity();
         }
 
-        if (is_connected()) { // TODO: offline operation
-
+        if (!is_connected()) { // TODO: offline operation
+            findViewById(R.id.button_post).setEnabled(false);
+            Toast.makeText(this, "No network connection, posting disabled", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -82,7 +79,7 @@ public class PostActivity extends Activity {
 
         @Override
         protected String doInBackground(String... texts) {
-            FriendFeedService frf = new FriendFeedServiceImpl(login, remotekey);
+            FriendFeedService frf = new FriendFeedServiceImpl(prefs.getString("login", ""), prefs.getString("remotekey", ""));
             frf.setUseCompression(true);
 
             try {
@@ -101,7 +98,7 @@ public class PostActivity extends Activity {
 
 
     public void button_post_onClick(View view) {
-        new FriendFeedPostTask().execute("takoe");
-
+        EditText text = (EditText)findViewById(R.id.edit_body);
+        new FriendFeedPostTask().execute(text.getText().toString());
     }
 }
